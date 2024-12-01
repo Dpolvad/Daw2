@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Act 1</title>
+  <style>
+	  * {
+	box-sizing: border-box;
+}
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;.
+	  min-height: 100vh;
+	  background-image: url("imagenes/blackjack.jpg");
+	  background-position: center;
+	  background-repeat: no-repeat; 
+	  background-attachment: fixed;
+    }
+
+    .botones {
+      margin: 20px 0;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .carta {
+      margin: 10px;
+      display: inline-block;
+    }
+    .carta img {
+      width: 80px;
+      height: 120px;
+    }
+    .mano {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+	<main>
+<h1>Blackjack</h1>
+  <div id="game"></div>
+  <div id="banca" class="mano">
+    <h2>Banca</h2>
+  </div>
+  <div id="jugador" class="mano">
+    <h2>Jugador</h2>
+  </div>
+<div class="botones">
+    <button id="botonPedir" disabled>Pedir Carta</button>
+    <button id="botonPlantarse" disabled>Plantarse</button>
+	<button id="botonReinicio">Nuevo Juego</button>
+  </div>
+</main>
+<script>
+    // Variables globales
+    let Jugador = prompt("Introduce tu nombre:");
+    let baraja = [];
+    let manoBanca = [];
+    let manoJugador = [];
+    let puntosBanca = 0;
+    let puntosJugador = 0;
+
+    // Iniciar el juego
+    document.querySelector("#game").innerHTML = `<h2>¡Bienvenido, ${Jugador}!</h2>`;
+
+    // Generar la baraja
+    function generarBaraja() {
+      const valores = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+      const palos = ['C', 'D', 'T', 'P'];
+      baraja = [];
+      for (const valor of valores) {
+        for (const palo of palos) {
+          baraja.push({ valor, palo });
+        }
+	  }
+      baraja = baraja.sort(() => Math.random() - 0.5);
+    }
+	
+	// Mapeo de palos a iniciales
+    const inicialesPalos = {
+      "C": "Corazones",
+      "D": "Diamantes",
+      "T": "Tréboles",
+      "P": "Picas"
+    };
+	
+    // Obtener valor de la carta
+    function obtenerValor(carta) {
+      if (['J', 'Q', 'K'].includes(carta.valor)) return 11;
+      if (carta.valor === '1') return 1;
+      return parseInt(carta.valor);
+    }
+    
+    // Mostrar carta
+    function mostrarCarta(carta, destino) {
+      const cartaDiv = document.createElement("div");
+      cartaDiv.classList.add("carta");
+	  const inicialPalo = inicialesPalos[carta.palo]; // Obtener la inicial del palo
+      const img = document.createElement("img");
+      img.src = `imagenes/${carta.valor}${carta.palo}.png`;
+      img.alt = `${carta.valor}${carta.palo}`;
+      cartaDiv.appendChild(img);
+      document.getElementById(destino).appendChild(cartaDiv);
+    }
+
+    // Turno de la banca
+    function turnoBanca() {
+      mostrarMensaje("Turno de la banca...");
+      while (puntosBanca < 17) {
+        const carta = baraja.pop();
+        manoBanca.push(carta);
+        puntosBanca += obtenerValor(carta);
+        mostrarCarta(carta, "banca");
+		const inicialPalo = inicialesPalos[carta.palo];
+        mostrarMensaje(`Banca saca: ${carta.valor} de ${inicialPalo}. Puntos: ${puntosBanca}`);
+        if (puntosBanca >= 22) {
+          mostrarMensaje("¡La banca ha perdido por superar 21!");
+          return finalizarJuego("Jugador");
+        }
+      }
+      mostrarMensaje("La banca se planta.");
+      turnoJugador();
+    }
+
+    // Turno del jugador
+    function turnoJugador() {
+      mostrarMensaje("Tu turno...");
+      document.querySelector("#botonPedir").disabled = false;
+      document.querySelector("#botonPlantarse").disabled = false;
+    }
+
+    // Finalizar el juego
+    function finalizarJuego(ganador) {
+      document.querySelector("#botonPedir").disabled = true;
+      document.querySelector("#botonPlantarse").disabled = true;
+      if (ganador === "Empate") {
+        mostrarMensaje("¡El juego termina en empate!");
+      } else {
+        mostrarMensaje(`¡${ganador} gana el juego!`);
+      }
+    }
+
+    // Mostrar mensaje en el juego
+    function mostrarMensaje(mensaje) {
+      document.querySelector("#game").innerHTML += `<p>${mensaje}</p>`;
+    }
+
+    // Comprobar el resultado
+    function comprobarResultado() {
+      if (puntosJugador >= 22) {
+        mostrarMensaje("¡Has perdido por superar 21 puntos!");
+        finalizarJuego("Banca");
+      } else if (puntosJugador === 21 && puntosBanca === 21) {
+        finalizarJuego("Empate");
+      } else if (puntosJugador > puntosBanca) {
+        finalizarJuego("Jugador");
+      } else {
+        finalizarJuego("Banca");
+      }
+    }
+
+    // Acciones de los botones
+    document.querySelector("#botonPedir").addEventListener("click", () => {
+      const carta = baraja.pop();
+      manoJugador.push(carta);
+      puntosJugador += obtenerValor(carta);
+      mostrarCarta(carta, "jugador");
+      mostrarMensaje(`Has sacado: ${carta.valor} de ${carta.palo}. Puntos: ${puntosJugador}`);
+      if (puntosJugador >= 22) {
+        finalizarJuego("Banca");
+      }
+    });
+
+    document.querySelector("#botonPlantarse").addEventListener("click", () => {
+      mostrarMensaje("Te has plantado.");
+      comprobarResultado();
+    });
+
+	// Boton reinicio
+    document.querySelector("#botonReinicio").addEventListener("click", () => {
+      location.reload();
+    });
+	
+    // Comenzar el juego
+    function iniciarJuego() {
+      generarBaraja();
+      turnoBanca();
+    }
+
+    iniciarJuego();
+	obtenerPalo();
+  </script>
+</body>
+</html>
+
